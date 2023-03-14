@@ -1,3 +1,10 @@
+<?php
+
+require_once "./src/modele/produitsDB.php";
+$categories = selectAllCategory();
+
+?>
+
 <!doctype html>
 <html lang="fr">
 <head>
@@ -52,26 +59,16 @@
     <main>
         <div class="content">
             <div class="grille_produit">
-                <div class="carte">
-                    <img src="image/logo.png" alt="">
-                    <h1>categorie 1</h1>
-                    <p>A partir de prix le plus bas</p>
-                </div>
-                <div class="carte">
-                    <img src="image/logo.png" alt="">
-                    <h1>categorie 2</h1>
-                    <p>Courte description du produit</p>
-                </div>
-                <div class="carte">
-                    <img src="image/logo.png" alt="">
-                    <h1>categorie 3</h1>
-                    <p>Courte description du produit</p>
-                </div>
-                <div class="carte">
-                    <img src="image/logo.png" alt="">
-                    <h1>categorie 4</h1>
-                    <p>Courte description du produit</p>
-                </div>
+                <?php
+                foreach ($categories as $categorie) { ?>
+                    <div class="carte">
+                        <a href="details_produits.php?id=<?= $categorie["id_categorie"]?>">
+                        <img src="./image/produit/<?= $categorie["photo_categorie"]?>" alt="">
+                        <h2><?= $categorie["Libelle_categorie"]?></h2>
+                        </a>
+                    </div>
+                <?php } ?>
+
             </div>
         </div>
     </main>
