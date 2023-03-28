@@ -1,3 +1,47 @@
+<?php
+session_start();
+if (!isset($_SESSION["panier"])) {
+    // Création du panier
+    $_SESSION["panier"] = [];
+}
+require_once "./src/modele/produitsDB.php";
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    print_r($_POST);
+    if(isset($_POST["boutton-ajout"])) {
+        $id = $_POST["all-product"];
+
+        $nomProduit = $_POST["nom-produit"];
+        $prixProduit = $_POST["prix-produit"];
+        if (array_key_exists($id, $_SESSION["panier"])) {
+            $erreurs = "Ce produit est deja ajouter au panier";
+        } else {
+            $produit = [
+                "nom" => $nomProduit,
+                "prix" => $prixProduit,
+                "quantite" => 1,
+            ];
+            $_SESSION["panier"][$nomProduit] = $produit;
+        }
+    } elseif (isset($_POST["btn-modif"])) {
+        $nom = $_POST["nom-produit"];
+        $quantite = $_POST["quantite-produit"];
+        $_SESSION["panier"][$nom]["quantite"] = $quantite;
+    } elseif (isset($_POST["btn-suppr"])) {
+        $nom = $_POST["nom-produit"];
+        unset($_SESSION["panier"][$nom]);
+    } elseif (isset($_POST["vider-panier"])) {
+        foreach ($_SESSION["panier"] as $produit) {
+            $nom = $produit["nom"];
+            unset($_SESSION["panier"][$nom]);
+        }
+    }
+}
+
+
+require_once "./src/modele/produitsDB.php";
+$produits = selectAllProduct();
+?>
+
 <!doctype html>
 <html lang="fr">
 <head>
@@ -51,7 +95,94 @@
 
     <main>
         <div class="content">
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit. Enim explicabo laboriosam mollitia quas, qui sapiente. Autem blanditiis cum eveniet exercitationem inventore necessitatibus numquam similique. Dicta magni quasi saepe? Aperiam architecto aspernatur consequatur debitis deleniti doloribus eaque eligendi eveniet excepturi explicabo fuga illo illum in iusto laborum natus necessitatibus numquam praesentium quaerat totam vitae voluptatem, voluptatibus. Ex, provident, sequi.
+
+            <div class="formulaire_ajout_panier">
+                <h1>Ajouter un article au devis</h1>
+                <form action="" method="post">
+                    <input type="text" name="prenom" placeholder="Prénom">
+
+                    <input type="text" name="nom" placeholder="Nom">
+
+                    <select name="all-product" id="all-product">
+                        <option value="">Veuillez choisir votre produit</option>
+                        <?php
+                        $idBefore = 0;
+                        foreach ($produits as $produit) {
+                            $idNow = $produit["id_categorie"];
+                            if ($idNow <> $idBefore) {
+                                $idBefore = $idNow;
+                                $categorie = selectCategoryByID($idNow);
+                            ?>
+                                </optgroup>
+                                <optgroup  label="<?= $categorie[0]["Libelle_categorie"]?>">
+                            <?php } ?>
+                            <option value="<?= $produit["id_produit"]?>"><?= $produit["nom_produit"]?></option>
+                        <?php } ?>
+                        </optgroup>
+                    </select>
+                    <input type="number" name="quantite" min="1" placeholder="Veuillez saisir une quantité">
+                    <input type="submit" value="Ajouter au devis" name="boutton-ajout">
+                </form>
+            </div>
+
+            <div class="table">
+                <table class="blueTable">
+                    <thead>
+                    <tr>
+                        <th>Produit</th>
+                        <th>Prix</th>
+                        <th>Quantité</th>
+                        <th>total</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    <?php
+                    $total = 0;
+                    foreach ($_SESSION["panier"] as $produit) {
+                        $totalProduit = $produit["prix"] * $produit["quantite"];
+                        $total += $totalProduit;
+                        ?>
+                        <tr>
+                            <td><?= $produit["nom"]?></td>
+                            <td><?= $produit["prix"]?></td>
+                            <td>
+                                <form method="post">
+                                    <input type="hidden" name="nom-produit" value="<?= $produit["nom"]?>">
+                                    <input type="number" name="quantite-produit" min="1" value="<?= $produit["quantite"]?>">
+                                    <button type="submit" class="btn-modif" name="btn-modif">Modifier</button>
+                                </form>
+                            </td>
+                            <td><?= $totalProduit?> €</td>
+                            <td>
+                                <form method="post">
+                                    <input type="hidden" name="nom-produit" value="<?= $produit["nom"]?>">
+                                    <button type="submit" class="btn-suppr" name="btn-suppr">Supprimer</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <?php } ?>
+                    </tbody>
+
+                    <tfoot>
+                    <tr>
+                        <td colspan="3">
+                            Total
+                        </td>
+                        <td><div class="total"><?= $total?> €</div></td>
+                        <td>
+                            <form method="post">
+                                <button type="submit" class="btn-suppr" name="vider-panier">Vider panier</button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tfoot>
+                </table>
+                <div class="btn-retour-commande">
+                    <p><a href="index.php">Valider le devis</a></p>
+                </div>
+            </div>
         </div>
     </main>
     <footer class="footer">

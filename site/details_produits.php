@@ -15,6 +15,7 @@ if (!empty($_GET["id"])) {
     $erreur = "L'URL n'est pas valide !";
 }
 $produits = selectProductByID($id);
+$categorie = selectCategoryByID($id)
 ?>
 
 <!doctype html>
@@ -71,24 +72,33 @@ if (isset($erreur) ) { ?>
 
         <header>
             <div class="header">
-                <h1>AFFICHER NOM de la categorie</h1>
+                <h1><?= $categorie[0]["Libelle_categorie"]?></h1>
+            </div>
+            <div class="chemin_produit">
+                <p>
+                    <a href="produit.php"><i class="fa-solid fa-house"></i></a>
+                    >
+                </p>
+                <p>
+                    <?= $categorie[0]["Libelle_categorie"]?>
+                </p>
             </div>
         </header>
 
         <main>
             <div class="content">
-                <div class="grille_produit">
-                    <?php
-                    foreach ($produits as $produit) { ?>
-                        <div class="carte">
-                            <a href="">
-                                <img src="./image/produit/<?= $produit["photo"]?>" alt="">
-                                <h2><?= $produit["nom_produit"]?></h2>
-                                <p><?= $produit["prix_ht"]?></p>a
-                            </a>
-                        </div>
-                    <?php } ?>
+                <div class="content_details_produit">
+                    <div class="grille_produit">
+                        <?php
+                        foreach ($produits as $produit) { ?>
+                            <div class="carte">
+                                    <img src="./image/produit/<?= $produit["photo"]?>" alt="">
+                                    <h2><?= $produit["nom_produit"]?></h2>
+                                    <p><?= $produit["prix_ht"]?> €</p>
+                            </div>
+                        <?php } ?>
 
+                    </div>
                 </div>
             </div>
         </main>
