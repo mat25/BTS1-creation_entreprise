@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once "./src/modele/produitsDB.php";
 if (!isset($_SESSION["panier"])) {
     // Création du panier
     $_SESSION["panier"] = [];
@@ -10,8 +11,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if(isset($_POST["boutton-ajout"])) {
         $id = $_POST["all-product"];
 
-        $nomProduit = $_POST["nom-produit"];
-        $prixProduit = $_POST["prix-produit"];
+        $produitChoisi = selectProductByIDProduct($id);
+        print_r($produitChoisi);
+        $nomProduit = $produitChoisi[0]["nom_produit"];
+        $prixProduit = $produitChoisi[0]["prix_ht"];
         if (array_key_exists($id, $_SESSION["panier"])) {
             $erreurs = "Ce produit est deja ajouter au panier";
         } else {
@@ -60,7 +63,7 @@ $produits = selectAllProduct();
     <nav class="navigation">
         <div class="image">
             <a href="index.php">
-                <img src="image/logo.png" alt="outils de menuiserie">
+                <img src="image/logo_entreprise.png" alt="outils de menuiserie">
             </a>
         </div>
         <div class="panier_utilisateur">
@@ -79,7 +82,7 @@ $produits = selectAllProduct();
         </div>
         <div class="services">
             <p>
-                <a href="organigramme.php">Notre entreprise</a>
+                <a href="organigramme.php">Notre personnel</a>
             </p>
         </div>
         <div class="contact">
@@ -203,22 +206,22 @@ $produits = selectAllProduct();
         </div>
         <div class="retrait_atelier">
             <img src="image/retrait.png" alt="Devanture de magasin">
-            <h2>Retrait a notre atelier</h2>
+            <h2>Retrait à notre atelier</h2>
             <p>Gratuit préparé par nos équipes</p>
         </div>
         <div class="rgpd">
             <p>Conformément à la réglementation applicable en matière de données personnelles, vous disposez d'un droit d'accès, de rectification et d'effacement, du droit à la limitation du traitement des données vous concernant. Vous pouvez consulter notre politique de confidentialité</p>
         </div>
-        <div class="boutton_acces_espace_client">
-            <p><a href="compte_utilisateur.php">Accéder a mon espace</a></p>
-        </div>
         <div class="paiement">
-            <i class="fa-brands fa-cc-visa"></i>
-            <i class="fa-brands fa-cc-mastercard"></i>
-            <img class="CB" src="image/CB.svg" alt="">
+            <a href="https://www.facebook.com"><i class="fa-brands fa-facebook"></i></a>
+            <a href="https://twitter.com/?lang=fr"><i class="fa-brands fa-twitter"></i></a>
+            <a href="https://fr.linkedin.com/"><i class="fa-brands fa-linkedin"></i></a>
+            <div class="boutton_acces_espace_client">
+                <a href="contact.php">Nous contactez</a>
+            </div>
         </div>
         <div class="copyright">
-            <p>© Véritable Menuiserie</p>
+            <p>© Véritable Menuisier</p>
         </div>
     </footer>
 

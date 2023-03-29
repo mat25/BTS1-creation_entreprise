@@ -39,3 +39,13 @@ function selectAllProduct() : array {
 
     return $categorie;
 }
+
+function selectProductByIDProduct($id) : array {
+    $connexion = createConnection();
+    $requeteSQL = "SELECT * FROM produit WHERE id_produit = :id";
+    $requete = $connexion->prepare($requeteSQL);
+    $requete->bindValue(":id",$id);
+    $requete->execute();
+    $produit = $requete ->fetchAll(PDO::FETCH_ASSOC);
+    return $produit;
+}
