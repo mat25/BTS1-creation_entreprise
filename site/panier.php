@@ -1,45 +1,138 @@
 <?php
 session_start();
+require_once "./src/modele/devisDB.php";
 require_once "./src/modele/produitsDB.php";
+require_once "./src/utils/prix.php";
 if (!isset($_SESSION["panier"])) {
     // Création du panier
     $_SESSION["panier"] = [];
 }
+$erreurs = [];
+$quantite_form = null;
+$prenom_validation = null;
+$nom_validation = null;
+$email_validation = null;
+$num_telephone_validation = null;
 require_once "./src/modele/produitsDB.php";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    print_r($_POST);
-    if(isset($_POST["boutton-ajout"])) {
-        $id = $_POST["all-product"];
+    if (isset($_POST["boutton-ajout"])) {
 
-        $produitChoisi = selectProductByIDProduct($id);
-        print_r($produitChoisi);
-        $nomProduit = $produitChoisi[0]["nom_produit"];
-        $prixProduit = $produitChoisi[0]["prix_ht"];
-        if (array_key_exists($id, $_SESSION["panier"])) {
-            $erreurs = "Ce produit est deja ajouter au panier";
+        if (empty(trim($_POST["all-product"]))) {
+            $erreurs["produit"] = "Il faut choisir un produit !";
+        }
+        if (empty(trim($_POST["quantite"]))) {
+            $erreurs["quantite"] = "Il faut choisir une quantite !";
+        } elseif ($_POST["quantite"] <= 0) {
+            $erreurs["quantite"] = "Il faut choisir une quantite superieur a 0 !";
         } else {
+            $quantite_form = trim($_POST["quantite"]);
+        }
+
+
+        if (empty($erreurs)) {
+            $id = $_POST["all-product"];
+            $produitChoisi = selectProductByIDProduct($id);
+            $idProduit = $produitChoisi[0]["id_produit"];
+            $nomProduit = $produitChoisi[0]["nom_produit"];
+            $prixProduit = $produitChoisi[0]["prix_ht"];
+            $qteDisponnible = $produitChoisi[0]["quantité_stock"];
+            $qteProduit = $_POST["quantite"];
+            if ($qteProduit > $qteDisponnible) {
+                $erreurs["produit"] = "Il ne reste que $qteDisponnible produit en stock !";
+            }
+            if (isset($_SESSION["panier"][$nomProduit])) {
+                $erreurs["produit"] = "Ce produit est deja ajouter au panier";
+            }
+        }
+
+        if (empty($erreurs)) {
             $produit = [
+                "id" => $idProduit,
                 "nom" => $nomProduit,
                 "prix" => $prixProduit,
-                "quantite" => 1,
+                "quantite" => $qteProduit,
             ];
             $_SESSION["panier"][$nomProduit] = $produit;
         }
+
     } elseif (isset($_POST["btn-modif"])) {
+        $id = $_POST["id-produit"];
+        $produitChoisi = selectProductByIDProduct($id);
+        $qteDisponnible = $produitChoisi[0]["quantité_stock"];
         $nom = $_POST["nom-produit"];
         $quantite = $_POST["quantite-produit"];
-        $_SESSION["panier"][$nom]["quantite"] = $quantite;
+        if ($quantite > $qteDisponnible) {
+            $erreurs[$nom] = "Il ne reste que $qteDisponnible produit en stock !";
+        } elseif ($quantite > 0) {
+            $_SESSION["panier"][$nom]["quantite"] = $quantite;
+        }
     } elseif (isset($_POST["btn-suppr"])) {
         $nom = $_POST["nom-produit"];
         unset($_SESSION["panier"][$nom]);
+
+        if (empty($_SESSION["panier"])) {
+            unset($_SESSION["user_panier"]);
+        }
+
+
     } elseif (isset($_POST["vider-panier"])) {
         foreach ($_SESSION["panier"] as $produit) {
             $nom = $produit["nom"];
             unset($_SESSION["panier"][$nom]);
         }
+        unset($_SESSION["user_panier"]);
+
+    } elseif (isset($_POST["valid-devis"])) {
+        if (empty(trim($_POST["prenom_validation"]))) {
+            $erreurs["prenom_validation"] = "Le prenom est obligatoire";
+        } else {
+            $prenom_validation = $_POST["prenom_validation"];
+        }
+
+        if (empty(trim($_POST["nom_validation"]))) {
+            $erreurs["nom_validation"] = "Le nom est obligatoire";
+        } else {
+            $nom_validation = $_POST["nom_validation"];
+        }
+
+        if (empty(trim($_POST["email_validation"]))) {
+            $erreurs["email_validation"] = "L'email est obligatoire";
+        } elseif (!filter_var(trim($_POST["email_validation"]), FILTER_VALIDATE_EMAIL)) {
+            $erreurs["email_validation"] = "L'email n'est pas valide !";
+        } else {
+            $email_validation = $_POST["email_validation"];
+        }
+
+        if (empty(trim($_POST["num_telephone_validation"]))) {
+            $erreurs["num_telephone_validation"] = "Le numero de téléphone est obligatoire";
+        } else {
+            $num_telephone_validation = $_POST["num_telephone_validation"];
+        }
+
+        if (empty($_SESSION["panier"])) {
+            $erreurs["valide_panier"] = "il faut ajouter des produits au panier !";
+        }
+
+        if (empty($erreurs)) {
+            // Requete SQL qui ajoute le panier dans la BDD
+            $heure = date("Y-m-d H:i:s");
+            $valide = true;
+            addDevis($heure,$valide,$nom_validation,$prenom_validation,$email_validation,$num_telephone_validation);
+            $ArrayId = selectIdBydate($heure);
+            $id = $ArrayId["id_devis"];
+            foreach ($_SESSION["panier"] as $produit) {
+                addContenuDevis($id,$produit["id"],$produit["quantite"]);
+                updateStock($produit["id"],$produit["quantite"]);
+            }
+            foreach ($_SESSION["panier"] as $produit) {
+                $nom = $produit["nom"];
+                unset($_SESSION["panier"][$nom]);
+            }
+            unset($_SESSION["user_panier"]);
+            header("location:index.php");
+        }
     }
 }
-
 
 require_once "./src/modele/produitsDB.php";
 $produits = selectAllProduct();
@@ -67,8 +160,8 @@ $produits = selectAllProduct();
             </a>
         </div>
         <div class="panier_utilisateur">
-            <a href="panier.php"><i class="fa-solid fa-basket-shopping"></i></a>
-            <a href="compte_utilisateur.php"><i class="fa-solid fa-user"></i></a>
+            <a href="panier.php">Panier</a>
+            <a href="compte_utilisateur.php"><i class="fa-solid fa-user"></i>Se connecter</a>
         </div>
         <div class="accueil">
             <p>
@@ -102,40 +195,50 @@ $produits = selectAllProduct();
             <div class="formulaire_ajout_panier">
                 <h1>Ajouter un article au devis</h1>
                 <form action="" method="post">
-                    <input type="text" name="prenom" placeholder="Prénom">
-
-                    <input type="text" name="nom" placeholder="Nom">
-
                     <select name="all-product" id="all-product">
                         <option value="">Veuillez choisir votre produit</option>
                         <?php
                         $idBefore = 0;
-                        foreach ($produits as $produit) {
-                            $idNow = $produit["id_categorie"];
-                            if ($idNow <> $idBefore) {
-                                $idBefore = $idNow;
-                                $categorie = selectCategoryByID($idNow);
-                            ?>
-                                </optgroup>
-                                <optgroup  label="<?= $categorie[0]["Libelle_categorie"]?>">
+                        foreach ($produits
+
+                        as $produit) {
+                        $idNow = $produit["id_categorie"];
+                        if ($idNow <> $idBefore) {
+                        $idBefore = $idNow;
+                        $categorie = selectCategoryByID($idNow);
+                        ?>
+                        </optgroup>
+                        <optgroup label="<?= $categorie[0]["Libelle_categorie"] ?>">
                             <?php } ?>
-                            <option value="<?= $produit["id_produit"]?>"><?= $produit["nom_produit"]?></option>
-                        <?php } ?>
+                            <option value="<?= $produit["id_produit"] ?>"><?= $produit["nom_produit"] . " (" . formatPrix($produit["prix_ht"]) . ")" ?></option>
+                            <?php } ?>
                         </optgroup>
                     </select>
-                    <input type="number" name="quantite" min="1" placeholder="Veuillez saisir une quantité">
+                    <?php if (isset($erreurs["produit"])) { ?>
+                        <div class="erreur_validation">
+                            <p><?= $erreurs["produit"] ?></p>
+                        </div>
+                    <?php } ?>
+                    <input type="number" name="quantite" min="1" placeholder="Veuillez saisir une quantité"
+                           value="<?= $quantite_form ?>">
+                    <?php if (isset($erreurs["quantite"])) { ?>
+                        <div class="erreur_validation">
+                            <p><?= $erreurs["quantite"] ?></p>
+                        </div>
+                    <?php } ?>
                     <input type="submit" value="Ajouter au devis" name="boutton-ajout">
                 </form>
             </div>
 
             <div class="table">
+                <h1>Récapitulatif du devis</h1>
                 <table class="blueTable">
                     <thead>
                     <tr>
                         <th>Produit</th>
-                        <th>Prix</th>
+                        <th>Prix unitaire</th>
                         <th>Quantité</th>
-                        <th>total</th>
+                        <th>Total</th>
                         <th>Actions</th>
                     </tr>
                     </thead>
@@ -148,19 +251,26 @@ $produits = selectAllProduct();
                         $total += $totalProduit;
                         ?>
                         <tr>
-                            <td><?= $produit["nom"]?></td>
-                            <td><?= $produit["prix"]?></td>
+                            <td><?= $produit["nom"] ?></td>
+                            <td><?= formatPrix($produit["prix"] . " ") ?></td>
                             <td>
                                 <form method="post">
-                                    <input type="hidden" name="nom-produit" value="<?= $produit["nom"]?>">
-                                    <input type="number" name="quantite-produit" min="1" value="<?= $produit["quantite"]?>">
+                                    <input type="hidden" name="nom-produit" value="<?= $produit["nom"] ?>">
+                                    <input type="hidden" name="id-produit" value="<?= $produit["id"] ?>">
+                                    <input type="number" name="quantite-produit" min="1"
+                                           value="<?= $produit["quantite"] ?>">
                                     <button type="submit" class="btn-modif" name="btn-modif">Modifier</button>
+                                    <?php if (isset($erreurs[$produit["nom"]])) { ?>
+                                        <div class="erreur_validation">
+                                            <p><?= $erreurs[$produit["nom"]] ?></p>
+                                        </div>
+                                    <?php } ?>
                                 </form>
                             </td>
-                            <td><?= $totalProduit?> €</td>
+                            <td><?= $totalProduit ?> €</td>
                             <td>
                                 <form method="post">
-                                    <input type="hidden" name="nom-produit" value="<?= $produit["nom"]?>">
+                                    <input type="hidden" name="nom-produit" value="<?= $produit["nom"] ?>">
                                     <button type="submit" class="btn-suppr" name="btn-suppr">Supprimer</button>
                                 </form>
                             </td>
@@ -170,10 +280,12 @@ $produits = selectAllProduct();
 
                     <tfoot>
                     <tr>
-                        <td colspan="3">
-                            Total
+                        <td colspan="2">
                         </td>
-                        <td><div class="total"><?= $total?> €</div></td>
+                        <td>Total</td>
+                        <td>
+                            <div class="total"><?= $total ?> €</div>
+                        </td>
                         <td>
                             <form method="post">
                                 <button type="submit" class="btn-suppr" name="vider-panier">Vider panier</button>
@@ -183,7 +295,51 @@ $produits = selectAllProduct();
                     </tfoot>
                 </table>
                 <div class="btn-retour-commande">
-                    <p><a href="index.php">Valider le devis</a></p>
+                    <p>
+                        <?php if (isset($erreurs["valide_panier"])){ ?>
+                    <div class="erreur_validation">
+                        <p><?= $erreurs["valide_panier"] ?></p>
+                    </div>
+                    <?php } ?>
+                    <div class="formulaire_ajout_panier">
+                        <form method="post">
+
+                            <input type="text" name="prenom_validation" placeholder="Prénom"
+                                   value="<?= $prenom_validation ?>"></input>
+                            <?php if (isset($erreurs["prenom_validation"])) { ?>
+                                <div class="erreur_validation">
+                                    <p><?= $erreurs["prenom_validation"] ?></p>
+                                </div>
+                            <?php } ?>
+
+                            <input type="text" name="nom_validation" placeholder="Nom"
+                                   value="<?= $nom_validation ?>"></input>
+                            <?php if (isset($erreurs["nom_validation"])) { ?>
+                                <div class="erreur_validation">
+                                    <p><?= $erreurs["nom_validation"] ?></p>
+                                </div>
+                            <?php } ?>
+
+                            <input type="text" name="email_validation" placeholder="Email"
+                                   value="<?= $email_validation ?>"></input>
+                            <?php if (isset($erreurs["email_validation"])) { ?>
+                                <div class="erreur_validation">
+                                    <p><?= $erreurs["email_validation"] ?></p>
+                                </div>
+                            <?php } ?>
+
+                            <input type="text" name="num_telephone_validation" placeholder="Numéro de téléphone"
+                                   value="<?= $num_telephone_validation ?>"></input>
+                            <?php if (isset($erreurs["num_telephone_validation"])) { ?>
+                                <div class="erreur_validation">
+                                    <p><?= $erreurs["num_telephone_validation"] ?></p>
+                                </div>
+                            <?php } ?>
+
+                            <button type="submit" class="btn-valid-devis" name="valid-devis">Valider le devis</button>
+                        </form>
+                    </div>
+                    </p>
                 </div>
             </div>
         </div>
@@ -210,7 +366,9 @@ $produits = selectAllProduct();
             <p>Gratuit préparé par nos équipes</p>
         </div>
         <div class="rgpd">
-            <p>Conformément à la réglementation applicable en matière de données personnelles, vous disposez d'un droit d'accès, de rectification et d'effacement, du droit à la limitation du traitement des données vous concernant. Vous pouvez consulter notre politique de confidentialité</p>
+            <p>Conformément à la réglementation applicable en matière de données personnelles, vous disposez d'un droit
+                d'accès, de rectification et d'effacement, du droit à la limitation du traitement des données vous
+                concernant. Vous pouvez consulter notre politique de confidentialité</p>
         </div>
         <div class="paiement">
             <a href="https://www.facebook.com"><i class="fa-brands fa-facebook"></i></a>

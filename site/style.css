@@ -46,10 +46,19 @@ a {
 }
 
 .panier_utilisateur {
-    grid-area: 1/5/2/6;
-    justify-self: center;
+    grid-area: 1/4/2/6;
+    justify-self: end;
     align-self: end;
 }
+.panier_utilisateur i {
+    margin-left: 15px;
+}
+.erreur_validation {
+    color: red;
+    margin-bottom: 15px;
+    font-size: 20px;
+}
+
 
 .accueil {
     grid-area: 2/2/3/3;
@@ -426,6 +435,15 @@ footer img {
     outline: none;
     color: #25455c;
 }
+.btn-valid-devis {
+    border: none;
+    font-weight: bold;
+    background-color: #DEB887;
+    padding: 15px;
+    border-radius: 15px;
+    cursor: pointer;
+    color: #896255;
+}
 
 .titre {
     text-align: center;
@@ -440,8 +458,9 @@ form input {
     border: none;
     padding: 7px;
     margin-left: 10px;
-    background-color: #5CAFE7;
-    color: white;
+    background-color: #DEB887;
+    color: #896255;
+    font-weight: bold;
     border-radius: 10px;
     cursor: pointer;
 }
@@ -450,29 +469,34 @@ form input {
     border: none;
     padding: 7px;
     margin-left: 10px;
-    background-color: #e74c3c;
+    background-color: #7E5835;
     color: white;
     border-radius: 10px;
     cursor: pointer;
 }
 .total {
-    color: #5784BA;
-    font-size: 18px;
+    color: #896255;
+    font-size: 20px;
     font-weight: bold;
 }
 
+.table > h1 {
+    margin: 50px auto;
+    text-align: center;
+    color: #7E5835;
+}
 
 table.blueTable {
     border: 1px solid #FFFFFF;
     background-color: #FFFFFF;
-    width: 70%;
-    margin: 0 auto ;
+    margin: 0 auto;
+    width: 100%;
     text-align: center;
     border-collapse: collapse;
 }
 table.blueTable td, table.blueTable th {
     border: 0px solid #AAAAAA;
-    padding: 3px 2px;
+    padding: 15px 2px;
 }
 table.blueTable tbody td {
     font-size: 16px;
@@ -482,16 +506,12 @@ table.blueTable tr:nth-child(even) {
     background: #D0E4F5;
 }
 table.blueTable thead {
-    background: #000102;
-    background: -moz-linear-gradient(top, #404041 0%, #191a1b 66%, #000102 100%);
-    background: -webkit-linear-gradient(top, #404041 0%, #191a1b 66%, #000102 100%);
-    background: linear-gradient(to bottom, #404041 0%, #191a1b 66%, #000102 100%);
     border-bottom: 2px solid #FFFFFF;
 }
 table.blueTable thead th {
     font-size: 20px;
     font-weight: bold;
-    color: #FFFFFF;
+    color: black;
     text-align: center;
     border-left: 2px solid #FFFFFF;
 }
@@ -500,7 +520,8 @@ table.blueTable thead th:first-child {
 }
 
 table.blueTable tfoot {
-    background-color: #B8B8B8;
+    background-color:white;
+    font-weight: bold;
     height: 40px;
 }
 table.blueTable tfoot td {
@@ -508,17 +529,18 @@ table.blueTable tfoot td {
 }
 
 .btn-retour-commande {
-    margin: 40px auto;
+    margin: 20px auto;
     text-align: center;
 }
 .btn-retour-commande p {
     margin-right: 15px;
     display: inline;
+    font-weight: bold;
 }
 .btn-retour-commande p a {
     text-decoration: none;
-    color: white;
-    background-color: coral;
+    color: #896255;
+    background-color: #DEB887;
     padding: 15px;
     border-radius: 10px;
 }

@@ -27,8 +27,8 @@ $horaires = selectAllTimeTable();
             </a>
         </div>
         <div class="panier_utilisateur">
-            <a href="panier.php"><i class="fa-solid fa-basket-shopping"></i></a>
-            <a href="compte_utilisateur.php"><i class="fa-solid fa-user"></i></a>
+            <a href="panier.php">Panier</a>
+            <a href="compte_utilisateur.php"><i class="fa-solid fa-user"></i>Se connecter</a>
         </div>
         <div class="accueil">
             <p>

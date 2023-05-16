@@ -1,7 +1,7 @@
 <?php
 
 require_once "./src/modele/produitsDB.php";
-
+require_once "./src/utils/prix.php";
 
 
 $id = null;
@@ -47,8 +47,8 @@ if (isset($erreur) ) { ?>
                 </a>
             </div>
             <div class="panier_utilisateur">
-                <a href="panier.php"><i class="fa-solid fa-basket-shopping"></i></a>
-                <a href="compte_utilisateur.php"><i class="fa-solid fa-user"></i></a>
+                <a href="panier.php">Panier</a>
+                <a href="compte_utilisateur.php"><i class="fa-solid fa-user"></i>Se connecter</a>
             </div>
             <div class="accueil">
                 <p>
@@ -94,7 +94,8 @@ if (isset($erreur) ) { ?>
                             <div class="carte">
                                     <img src="./image/produit/<?= $produit["photo"]?>" alt="">
                                     <h2><?= $produit["nom_produit"]?></h2>
-                                    <p><?= $produit["prix_ht"]?> €</p>
+                                    <p><?= formatPrix($produit["prix_ht"])?>
+                                    <i class="fa-solid fa-cart-plus"></i></p>
                             </div>
                         <?php } ?>
 
