@@ -3,6 +3,85 @@
 require_once "./src/modele/horaireDB.php";
 require_once "./src/utils/jour.php";
 $horaires = selectAllTimeTable();
+
+$prenom = null;
+$nom = null;
+$mail = null;
+$telephone = null;
+$subject = null;
+$message = null;
+$date = date("Y-m-d H:m:s");
+$valide = false;
+$erreurs = [];
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+
+    if(empty(trim($_POST["prenom"]))) {
+        $erreurs["prenom"] = "Le prenom est obligatoire";
+    } else {
+        $prenom = trim($_POST["prenom"]);
+    }
+
+    if(empty(trim($_POST["nom"]))) {
+        $erreurs["nom"] = "Le nom est obligatoire";
+    } else {
+        $nom = trim($_POST["nom"]);
+    }
+
+    if (empty(trim($_POST["email"]))) {
+        $erreurs["email"] = "L'email est obligatoire";
+    } elseif (!filter_var(trim($_POST["email"]), FILTER_VALIDATE_EMAIL)) {
+        $erreurs["email"] = "L'email n'est pas valide";
+    } else {
+        $mail = trim($_POST["email"]);
+    }
+
+    if(empty(trim($_POST["telephone"]))) {
+        $erreurs["telephone"] = "Le telephone est obligatoire";
+    } else {
+        $telephone = trim($_POST["telephone"]);
+    }
+
+    if(empty(trim($_POST["sujet"]))) {
+        $erreurs["sujet"] = "Le sujet est obligatoire";
+    } else {
+        $subject = trim($_POST["sujet"]);
+    }
+
+    if(empty(trim($_POST["message"]))) {
+        $erreurs["message"] = "Le message est obligatoire";
+    } else {
+        $message = trim($_POST["message"]);
+    }
+
+
+    if (empty($erreurs)) {
+
+        $entetes = [
+            "from" => "contact@VeritableMenuisier.fr",
+            // TEXT-plain correspond au type MIME du contenus
+            "content-type" => "text/html; charset=utf-8",
+        ];
+
+        $objet = "Reponse automatique de Veritable Menuisier";
+        $messageReponse = "
+            <p>Bonjour,</p>
+            <br>
+            <p>Nous avons bien reçu votre demande de contact, nous allons la traité dans les plus bref délai.</p>
+            <br>
+            <p>Cordialement,</p>
+            <p>Best Student</p>
+            ";
+
+        if (mail($mail,$objet,$messageReponse,$entetes)) {
+
+            header("Location: index.php");
+        } else {
+            $erreurs["message"] = "Une Erreur interne est survenue";
+        }
+    }
+}
+
 ?>
 
 <!doctype html>
@@ -106,18 +185,41 @@ $horaires = selectAllTimeTable();
                     <form action="" method="post">
 
                         <input type="text" name="prenom" placeholder="Prénom">
+                        <?php
+                        if (isset($erreurs["prenom"])) { ?>
+                            <p class="erreur-validation"><?= $erreurs["prenom"] ?></p>
+                        <?php } ?>
 
                         <input class="nom" type="text" name="nom" placeholder="Nom">
+                        <?php
+                        if (isset($erreurs["nom"])) { ?>
+                            <p class="erreur-validation"><?= $erreurs["nom"] ?></p>
+                        <?php } ?>
+
 
                         <input type="text" name="email" placeholder="Email">
+                        <?php
+                        if (isset($erreurs["email"])) { ?>
+                            <p class="erreur-validation"><?= $erreurs["email"] ?></p>
+                        <?php } ?>
 
                         <input type="text" name="telephone" placeholder="Téléphone">
-
-                        <input type="text" name="promotion" placeholder="Promotion">
+                        <?php
+                        if (isset($erreurs["telephone"])) { ?>
+                            <p class="erreur-validation"><?= $erreurs["telephone"] ?></p>
+                        <?php } ?>
 
                         <input type="text" name="sujet" placeholder="Sujet de votre message">
+                        <?php
+                        if (isset($erreurs["sujet"])) { ?>
+                        <p class="erreur-validation"><?= $erreurs["sujet"] ?></p>
+                        <?php } ?>
 
                         <textarea class="message" name="message" rows="5" placeholder="Votre message"></textarea>
+                        <?php
+                        if (isset($erreurs["message"])) { ?>
+                            <p class="erreur-validation"><?= $erreurs["message"] ?></p>
+                        <?php } ?>
 
                         <input type="submit" value="Envoyer">
                     </form>
@@ -148,7 +250,7 @@ $horaires = selectAllTimeTable();
                     </div>
 
                     <div class="contact_info">
-                        <a href="mailto: contact@BestStudent.fr">contact@VéritableMenuisier.fr</a>
+                        <a href="mailto: contact@BestStudent.fr">contact@VeritableMenuisier.fr</a>
                     </div>
 
                 </div>

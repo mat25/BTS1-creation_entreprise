@@ -36,6 +36,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $nomProduit = $produitChoisi[0]["nom_produit"];
             $prixProduit = $produitChoisi[0]["prix_ht"];
             $qteDisponnible = $produitChoisi[0]["quantité_stock"];
+            $image = $produitChoisi[0]["photo"];
             $qteProduit = $_POST["quantite"];
             if ($qteProduit > $qteDisponnible) {
                 $erreurs["produit"] = "Il ne reste que $qteDisponnible produit en stock !";
@@ -48,6 +49,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (empty($erreurs)) {
             $produit = [
                 "id" => $idProduit,
+                "image-produit" => $image,
                 "nom" => $nomProduit,
                 "prix" => $prixProduit,
                 "quantite" => $qteProduit,
@@ -235,6 +237,7 @@ $produits = selectAllProduct();
                 <table class="blueTable">
                     <thead>
                     <tr>
+                        <th>Image</th>
                         <th>Produit</th>
                         <th>Prix unitaire</th>
                         <th>Quantité</th>
@@ -251,6 +254,7 @@ $produits = selectAllProduct();
                         $total += $totalProduit;
                         ?>
                         <tr>
+                            <td><img src="image/produit/<?= $produit["image-produit"]?>" alt="image du produit" width="200px" height="150px"></td>
                             <td><?= $produit["nom"] ?></td>
                             <td><?= formatPrix($produit["prix"] . " ") ?></td>
                             <td>
@@ -294,6 +298,7 @@ $produits = selectAllProduct();
                     </tr>
                     </tfoot>
                 </table>
+                <h1>Validation du devis</h1>
                 <div class="btn-retour-commande">
                     <p>
                         <?php if (isset($erreurs["valide_panier"])){ ?>

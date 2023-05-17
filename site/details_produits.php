@@ -1,21 +1,69 @@
 <?php
-
+session_start();
 require_once "./src/modele/produitsDB.php";
 require_once "./src/utils/prix.php";
 
 
 $id = null;
-$page=null;
+$page = null;
 $erreur = null;
 if (!empty($_GET["id"])) {
     // Le parametre existe
-    $id=$_GET["id"];
+    $id = $_GET["id"];
 } else {
     // Le paramettre n'existe pas ou ets vide
     $erreur = "L'URL n'est pas valide !";
 }
 $produits = selectProductByID($id);
-$categorie = selectCategoryByID($id)
+$categorie = selectCategoryByID($id);
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if (isset($_POST["boutton-ajout"])) {
+
+        if (empty(trim($_POST["all-product"]))) {
+            $erreurs["produit"] = "Il faut choisir un produit !";
+        }
+        if (empty(trim($_POST["quantite"]))) {
+            $erreurs["quantite"] = "Il faut choisir une quantite !";
+        } elseif ($_POST["quantite"] <= 0) {
+            $erreurs["quantite"] = "Il faut choisir une quantite superieur a 0 !";
+        } else {
+            $quantite_form = trim($_POST["quantite"]);
+        }
+
+
+        if (empty($erreurs)) {
+            $id = $_POST["all-product"];
+            $produitChoisi = selectProductByIDProduct($id);
+            $idProduit = $produitChoisi[0]["id_produit"];
+            $nomProduit = $produitChoisi[0]["nom_produit"];
+            $prixProduit = $produitChoisi[0]["prix_ht"];
+            $qteDisponnible = $produitChoisi[0]["quantité_stock"];
+            $image = $produitChoisi[0]["photo"];
+            $qteProduit = $_POST["quantite"];
+            if ($qteProduit > $qteDisponnible) {
+                $erreurs["produit"] = "Il ne reste que $qteDisponnible produit en stock !";
+            }
+            if (isset($_SESSION["panier"][$nomProduit])) {
+                $erreurs["produit"] = "Ce produit est deja ajouter au panier";
+            }
+        }
+        if (isset($_SESSION["panier"][$nomProduit])) {
+            $_SESSION["panier"][$nomProduit]["quantite"] += 1;
+        } else {
+            if (empty($erreurs)) {
+                $produit = [
+                    "id" => $idProduit,
+                    "image-produit" => $image,
+                    "nom" => $nomProduit,
+                    "prix" => $prixProduit,
+                    "quantite" => $qteProduit,
+                ];
+                $_SESSION["panier"][$nomProduit] = $produit;
+            }
+        }
+    }
+}
 ?>
 
 <!doctype html>
@@ -33,10 +81,10 @@ $categorie = selectCategoryByID($id)
 </head>
 <body>
 <?php
-if (isset($erreur) ) { ?>
+if (isset($erreur)) { ?>
     <div class="erreur">
         <h2>Erreur</h2>
-        <p><?= $erreur?></p>
+        <p><?= $erreur ?></p>
     </div>
 <?php } else { ?>
     <div class="container">
@@ -72,7 +120,7 @@ if (isset($erreur) ) { ?>
 
         <header>
             <div class="header">
-                <h1><?= $categorie[0]["Libelle_categorie"]?></h1>
+                <h1><?= $categorie[0]["Libelle_categorie"] ?></h1>
             </div>
             <div class="chemin_produit">
                 <p>
@@ -80,7 +128,7 @@ if (isset($erreur) ) { ?>
                     >
                 </p>
                 <p>
-                    <?= $categorie[0]["Libelle_categorie"]?>
+                    <?= $categorie[0]["Libelle_categorie"] ?>
                 </p>
             </div>
         </header>
@@ -92,10 +140,21 @@ if (isset($erreur) ) { ?>
                         <?php
                         foreach ($produits as $produit) { ?>
                             <div class="carte">
-                                    <img src="./image/produit/<?= $produit["photo"]?>" alt="">
-                                    <h2><?= $produit["nom_produit"]?></h2>
-                                    <p><?= formatPrix($produit["prix_ht"])?>
-                                    <i class="fa-solid fa-cart-plus"></i></p>
+                                <img src="./image/produit/<?= $produit["photo"] ?>" alt="">
+                                <h2><?= $produit["nom_produit"] ?></h2>
+                                <p><?= formatPrix($produit["prix_ht"]) ?></p>
+                                <form action="" method="post">
+                                    <input type="hidden" name="all-product" value="<?= $produit["id_produit"] ?>">
+                                    <input type="hidden" name="quantite" value="1">
+                                    <button type="submit" name="boutton-ajout">
+                                        <i class="fa-solid fa-cart-plus"></i>
+                                    </button>
+                                    <?php if (isset($erreurs["produit"])) { ?>
+                                        <div class="erreur_validation">
+                                            <p><?= $erreurs["produit"] ?></p>
+                                        </div>
+                                    <?php } ?>
+                                </form>
                             </div>
                         <?php } ?>
 
@@ -125,7 +184,9 @@ if (isset($erreur) ) { ?>
                 <p>Gratuit préparé par nos équipes</p>
             </div>
             <div class="rgpd">
-                <p>Conformément à la réglementation applicable en matière de données personnelles, vous disposez d'un droit d'accès, de rectification et d'effacement, du droit à la limitation du traitement des données vous concernant. Vous pouvez consulter notre politique de confidentialité</p>
+                <p>Conformément à la réglementation applicable en matière de données personnelles, vous disposez d'un
+                    droit d'accès, de rectification et d'effacement, du droit à la limitation du traitement des données
+                    vous concernant. Vous pouvez consulter notre politique de confidentialité</p>
             </div>
             <div class="paiement">
                 <a href="https://www.facebook.com"><i class="fa-brands fa-facebook"></i></a>
@@ -142,6 +203,6 @@ if (isset($erreur) ) { ?>
 
     </div>
 
-    <?php } ?>
+<?php } ?>
 </body>
 </html>

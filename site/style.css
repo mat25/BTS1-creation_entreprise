@@ -58,6 +58,11 @@ a {
     margin-bottom: 15px;
     font-size: 20px;
 }
+.erreur-validation {
+    color: red;
+    margin-bottom: 15px;
+    font-size: 20px;
+}
 
 
 .accueil {
